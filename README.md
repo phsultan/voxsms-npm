@@ -52,31 +52,27 @@ To install the Voxbone VoxSMS module and its dependencies, simply run the follow
     var fragref = voxbone.createFragRef();
     `````
 
-3. Send SMS with the parameters configured in step 1 (success/failure callback functions are optional)
+3. Send SMS with the parameters configured in step 1 (callback function is optional)
 
     `````
     var sms_sent = false;
-    var success = false;
+    var success = true;
     
-    voxbone.sendSMS(number, from_number, msg, fragref, 'all', function(transaction_id) {
+    voxbone.sendSMS(number, from_number, msg, fragref, 'all', function(error, response, body){
+        if (success === false){
+            return;
+        }
 
-        if (frag === null) {
+        if (response.statusCode !== 202 && response.statusCode !== 200){
+            console.log("Got error : " + JSON.stringify(error));
+            success = false;
+            return;
+        }
+
+        if (response.body.final === true) {
             sms_sent = true;
-	    success = true;
-            console.log("Single SMS sent, transaction ID : "  + transaction_id);
-        } else if (frag.frag_num === frag.frag_total) {
-            sms_sent = true;
-            console.log(frag.frag_num + "/" + frag.frag_total + " SMS sent OK, transaction ID: "  + transaction_id);
-        } else {
-            console.log(frag.frag_num + "/" + frag.frag_total + " SMS sent OK, transaction ID: "  + transaction_id);
-	    }
-     }, function(statusCode, frag) {
-       	    success = false;
-       	    if (frag) {
-       	        console.log(frag.frag_num + "/" + frag.frag_total + " SMS sent OK, transaction ID: "  + transaction_id);
-            } else {
-	            console.log("SMS failed to be sent, error code : " + statusCode);
-	        }
+            console.log("Total number of SMS sent : "  + response.body.frag_total);
+        }
      });
     `````
 
@@ -87,7 +83,7 @@ Available functions:
 1.  Sends an SMS with the parameters configured
 
     ````
-    voxbone.sendSMS(to, from, msg, fragref, dr[, successCB, [, failCB]]);
+    voxbone.sendSMS(to, from, msg, fragref, dr[, callback]);
     ````
 
 2.  Generates a random fragmentation reference used for long messages
